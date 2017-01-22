@@ -87,7 +87,7 @@ public class HelloAppEngine extends HttpServlet {
 			String key = (String)pMap.keySet().toArray()[0];
 			String verb = pMap.get(key)[0];
 			String[][] foo = getForms(verb);
-			out.println("<b>Hello, Neil-bhai! How goes it?!<br/>");
+			out.println("<b>Hello, Neil! How goes it?!<br/>");
 			for (int i = 0; i < foo[0].length; i++) {
 				out.println("<br/>" + foo[1][i]);
 			}
