@@ -24,7 +24,7 @@
   <title>Hello App Engine Standard</title>
 </head>
 <body>
-    <h1>Hello App Engine -- Standard!</h1>
+    <h1>Hello App Engine -- its tough!</h1>
 
   <p>This is <%= HelloInfo.getInfo() %>.</p>
   <table>
