@@ -70,13 +70,85 @@ public class HelloAppEngine extends HttpServlet {
 		}
 		return formArray;
 	}
+	
+	private class HElement {
+		String type;
+		HashMap<String, String> attributes = new HashMap<String, String>();
+		HElement(String type) {
+			this.type = type;
+		}
+		void addAttribute(String name, String val) {
+			attributes.put(name, val);
+		}
+		void setClass(String className) {
+			addAttribute("class", className);
+		}
+		void setID(String id) {
+			addAttribute("id", id);
+		}
+		public String toString() {
+			String attrs = "";
+			for (String key: attributes.keySet()) {
+				attrs = attrs + " " + key + "=\"" + attributes.get(key) + "\"";
+			}
+			return "<" + type + attrs + ">";
+		}
+	}
+
+	private class HInput extends HElement {
+		HInput(String name, String type)
+		{
+			super("input"); 
+			this.addAttribute("name", name);
+			this.addAttribute("type", type);
+		}
+		HInput(String type) {
+			super("input");
+			this.addAttribute("type", type);
+		}
+		void addValue(String val) {
+			addAttribute("value", val);
+		}
+	}
+
+	private class HTextInput extends HInput {
+		HTextInput(String name, String value, String className) {
+			super(name, "text");
+			addValue(value);
+			setClass(className);
+		}
+		HTextInput(String name, String value) {
+			super(name, "text");
+			addValue(value);
+		}
+		HTextInput(String name) {
+			super(name, "text");
+		}
+	}
+
+	private class HHidden extends HInput {
+		HHidden(String name, String value) {
+			super(name, "hidden");
+			this.addAttribute("value", value);
+		}
+	}
+	
+	private class HSubmit extends HInput {
+
+		HSubmit(String value, String className) {
+			super("submit");
+			this.addValue(value);
+			this.setClass(className);
+		}
+
+	}
 
 	public void writeQuestionForm(String question, String key, PrintWriter out) {
 		this.writeFormHeading(out);
 		writeActionType("verbIn", out);
-		out.println("<b>" + question + "</b>");
+		out.println(question);
 		writeTextInput(key, out);
-		out.println("<b>Pick your subject pronoun: </b>");
+		out.println("Pick your subject pronoun: ");
 		for (int i = 0; i < subjArray.length; i++) {
 			String optionNumber = "option" + String.valueOf(i);
 			String checkedOrNot = "";
@@ -87,13 +159,17 @@ public class HelloAppEngine extends HttpServlet {
 			out.println(s);
 		}
 		out.println("<br/>");
-		out.println("<input type=\"submit\" class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" value=\"Submit\"></form>"); 
+		HSubmit hs = new HSubmit("Submit", getSubmitClass());
+		out.println(hs.toString());
+		out.println("</form>"); 
 	}
 
 	private void writeTextInput(String key, PrintWriter out) {
 		out.println("<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">");
-	    out.println("<input class=\"mdl-textfield__input\" type=\"text\" name=\"" + key + "\" id=\"" + key + "\">");
-	    out.println("<label class=\"mdl-textfield__label\" for=\"" + key + "\">Verb. . .</label>");
+		HTextInput ht = new HTextInput(key); ht.setClass("mdl-textfield__input"); ht.setID(key);
+		out.println(ht.toString());
+		
+	    out.println("<label class=\"mdl-textfield__label\" for=\"" + key + "\">Verb...</label>");
 	    out.println("</div><br/>");
 	}
 
@@ -124,6 +200,15 @@ public class HelloAppEngine extends HttpServlet {
 	  return toReturn;
 	}
 	
+	private void generateHeader(String text, PrintWriter out) {
+		out.println("<div class=\"mdl-layout mdl-js-layout mdl-layout--fixed-header\">");
+		out.println("<header class=\"mdl-layout__header\">");
+		out.println("<div class=\"mdl-layout__header-row\">");
+		out.println("<span class=\"mdl-layout-title\">");
+		out.println(text);
+		out.println("</span></div></header></div><br/><br/><br/>");
+	}
+	
 	private void writeFormHeading(PrintWriter out) {
 		out.println("<form action=\"hello\" method=\"post\">");
 	}
@@ -132,52 +217,55 @@ public class HelloAppEngine extends HttpServlet {
 			String subject, String verb, PrintWriter out) {
 		writeFormHeading(out);
 		writeActionType("score", out);
-		out.println("<input type=\"hidden\" name=\"sTenses\" value=\"" + subject + "\">");
-		out.println("<input type=\"hidden\" name=\"verb\" value=\"" + verb + "\">");
+		out.println(new HHidden("sTenses", subject).toString());
+		out.println(new HHidden("verb", verb).toString());
+		
 		boolean hasAnswers = (userAnswers != null);
-		out.println("<table>");
+		out.println("<table class=\"mdl-data-table mdl-js-data-table\">");
 		for (int i = 0; i < tenses.length; i++) {
 			out.println("<tr>");
 			
 			out.println("<td><b>" + tenses[i] + ":</b></td>");
 			String formKey = tenses[i] + "-form";
 			out.println("<td>");
-			out.println("<input type=\"text\" name=\"" + formKey + "\"");
+			
+			
+			HTextInput hti = new HTextInput(formKey);
 			if (hasAnswers) {
 				String userAnswer = userAnswers.get(formKey);
 				if (userAnswer == null) userAnswer = "";
-				out.println("value=\"" + userAnswer + "\"");
 				System.out.println("User answer: " + userAnswer + ", correct: " + answers[i]);
+				hti.addAttribute("value", userAnswer);
 				if (!userAnswer.equalsIgnoreCase(answers[i])) {
-					printAttribute("class", "redBorder", out);
+					 hti.setClass("mdl-textfield__input redBorder");
 				} else {
-					printAttribute("class", "greenBorder", out);
+					hti.setClass("mdl-textfield__input greenBorder");
 				}
+			} else {
+				hti.setClass("mdl-textfield__input");
 			}
-			out.println("></td><br/>");
-			out.println("<input type=\"hidden\" name=\"" + tenses[i] + "\" value=\"" +
-			answers[i] + "\">");
+			out.println(hti.toString());
+			out.println("</td>");
+			out.println(new HHidden(tenses[i], answers[i]).toString());
 			out.println("</tr>");
 		}
 		out.println("</table>");
-		out.println("<input type=\"submit\" value=\"Submit\"></form>");
+		HSubmit hs = new HSubmit("Submit", getSubmitClass());
+		out.println(hs.toString() + "&nbsp;");
+		out.println("<a href=\"./hello\" class=\"" + getSubmitClass() + "\">Reset</a>");
+		out.println("</form>");
 	}
 	
-	private void printAttribute(String name, String value, PrintWriter out) {
-		out.println(name + "=\"" + value + "\"");
+	private String getSubmitClass() {
+		return "mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent";
 	}
+	
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) 
 			throws IOException {
 		doGet(request, response);
 	}
 	
-	public void writeStyles(PrintWriter out) {
-		out.println("<style>");
-		out.println("input.redBorder { border: 1px	solid red; }");
-		out.println("input.greenBorder { border: 1px solid green; }");
-		out.println("</style>");;
-	}
 	
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -188,15 +276,18 @@ public class HelloAppEngine extends HttpServlet {
 		PrintWriter out = response.getWriter();
 
 		out.println("<html>");
-		writeStyles(out);
-		out.println("<body bgcolor=\"#00BCD4\"");
+		
 		
 		out.println("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">");
-		out.println("<link rel=\"stylesheet\" href=\"https://code.getmdl.io/1.3.0/material.deep_purple-indigo.min.css\">");
+		out.println("<link rel=\"stylesheet\" href=\"https://code.getmdl.io/1.3.0/material.cyan-pink.min.css\">");
 		out.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"http://fonts.googleapis.com/css?family=Josefine+Slab\">");
 		out.println("<script defer src=\"https://code.getmdl.io/1.3.0/material.min.js\"></script>");
 		out.println("<style> body { font-family: 'Josefin Slab', serif; margin-left: 20px; margin-top: 20px; } </style>");
-		out.println("<style> body { text-align:center; } </style>");
+		out.println("<style>input.redBorder { border-bottom: 2px	solid red; border-radius: 8px; }</style>");
+		out.println("<style>input.greenBorder { border-bottom: 2px solid green;  border-radius: 8px; }</style>");
+		out.println("<body>");
+		
+		// out.println("<style> body { text-align:center; } </style>");
 		
 
 		Map<String, String[]> pMap = request.getParameterMap();
@@ -211,14 +302,14 @@ public class HelloAppEngine extends HttpServlet {
 		
 		switch (sMode) {
 		case Initial:
-			out.println("Welcome to Neil's Spanish Quiz.<br/>");
-			// out.println("<style> h1 {font-family: 'Josefin Slab', serif;}");
+			generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
+			
 			writeQuestionForm("Please input verb to quiz on:", "verb", out);
 			break;
 		case VerbInput:
 			String[] answers = getThingsToQuizOn(subject, getForms(verb));
 			// Generate output form
-			out.println("<b>Here is your quiz for verb: " + verb + "&nbsp;subject form: " + subject + "</b><br/>");
+			out.println("<h3>Here is your quiz for verb: " + verb + "&nbsp;subject form: " + subject + "</h3>");
 			writeQuizForm(answers, null, subject, verb, out);
 			
 			break;
