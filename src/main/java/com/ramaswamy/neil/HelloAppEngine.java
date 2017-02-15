@@ -36,7 +36,7 @@ public class HelloAppEngine extends HttpServlet {
 
 
 	String[] keys = {"verb", "conjugation"};
-	String subjArray[] = {"yo", "tu", "Ud.", "Nos.", "Vos.", "Uds."};
+	String subjArray[] = {"Yo", "Tú", "Él / Ella / Ud.", "Nos.", "Vos.", "Uds."};
 	enum ServerMode {Initial, VerbInput, Quiz, Score};
 	private static String[] tenses = {"presente", "futuro", "imperfecto", "pretérito", "condicional", "presente perfecto", "futuro perfecto", "pluscuamperfecto", "condicional perfecto", 
 			"presente subj", "imperfecto subj", "presente perfecto subj","pluscuam perfecto subj"};
@@ -75,15 +75,26 @@ public class HelloAppEngine extends HttpServlet {
 		this.writeFormHeading(out);
 		writeActionType("verbIn", out);
 		out.println("<b>" + question + "</b>");
-		out.println("<input type=\"text\" name=\"" + key + "\"><br/><br/>");
+		writeTextInput(key, out);
 		out.println("<b>Pick your subject pronoun: </b>");
 		for (int i = 0; i < subjArray.length; i++) {
-			String s = "<input type=\"radio\" name=\"sTenses\" value=\"" + subjArray[i] + 
-					"\"" + (i == 0 ? " checked> " : "> ") + subjArray[i];
+			String optionNumber = "option" + String.valueOf(i);
+			String checkedOrNot = "";
+			if (subjArray[i].equalsIgnoreCase("yo")) checkedOrNot = "checked";
+			String s = "<label class=\"mdl-radio mdl-js-radio\" for=\"" + optionNumber + "\"> "
+					+ "<input type=\"radio\" id=\"" + optionNumber + "\" value=\"" + subjArray[i] + "\"name=\"sTenses\" class=\"mdl-radio__button\"" +  checkedOrNot + "> "
+							+ "<span class=\"mdl-radio__label\">" + subjArray[i]+ "</span> </label>";
 			out.println(s);
 		}
 		out.println("<br/>");
-		out.println("<input type=\"submit\" value=\"Submit\"></form>"); 
+		out.println("<input type=\"submit\" class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" value=\"Submit\"></form>"); 
+	}
+
+	private void writeTextInput(String key, PrintWriter out) {
+		out.println("<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">");
+	    out.println("<input class=\"mdl-textfield__input\" type=\"text\" name=\"" + key + "\" id=\"" + key + "\">");
+	    out.println("<label class=\"mdl-textfield__label\" for=\"" + key + "\">Verb. . .</label>");
+	    out.println("</div><br/>");
 	}
 
 	public void writeActionType(String a, PrintWriter out) {
@@ -124,9 +135,13 @@ public class HelloAppEngine extends HttpServlet {
 		out.println("<input type=\"hidden\" name=\"sTenses\" value=\"" + subject + "\">");
 		out.println("<input type=\"hidden\" name=\"verb\" value=\"" + verb + "\">");
 		boolean hasAnswers = (userAnswers != null);
+		out.println("<table>");
 		for (int i = 0; i < tenses.length; i++) {
-			out.println("<b>" + tenses[i] + ":</b>&nbsp;");
+			out.println("<tr>");
+			
+			out.println("<td><b>" + tenses[i] + ":</b></td>");
 			String formKey = tenses[i] + "-form";
+			out.println("<td>");
 			out.println("<input type=\"text\" name=\"" + formKey + "\"");
 			if (hasAnswers) {
 				String userAnswer = userAnswers.get(formKey);
@@ -139,10 +154,12 @@ public class HelloAppEngine extends HttpServlet {
 					printAttribute("class", "greenBorder", out);
 				}
 			}
-			out.println("><br/>");
+			out.println("></td><br/>");
 			out.println("<input type=\"hidden\" name=\"" + tenses[i] + "\" value=\"" +
 			answers[i] + "\">");
+			out.println("</tr>");
 		}
+		out.println("</table>");
 		out.println("<input type=\"submit\" value=\"Submit\"></form>");
 	}
 	
@@ -165,13 +182,22 @@ public class HelloAppEngine extends HttpServlet {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws IOException {
+	
 
 		response.setContentType("text/html; charset=UTF-8");
 		PrintWriter out = response.getWriter();
 
 		out.println("<html>");
 		writeStyles(out);
-		out.println("<body bgcolor=\"white\">");
+		out.println("<body bgcolor=\"#00BCD4\"");
+		
+		out.println("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/icon?family=Material+Icons\">");
+		out.println("<link rel=\"stylesheet\" href=\"https://code.getmdl.io/1.3.0/material.deep_purple-indigo.min.css\">");
+		out.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"http://fonts.googleapis.com/css?family=Josefine+Slab\">");
+		out.println("<script defer src=\"https://code.getmdl.io/1.3.0/material.min.js\"></script>");
+		out.println("<style> body { font-family: 'Josefin Slab', serif; margin-left: 20px; margin-top: 20px; } </style>");
+		out.println("<style> body { text-align:center; } </style>");
+		
 
 		Map<String, String[]> pMap = request.getParameterMap();
 		Map<String, String> pNewMap = new HashMap<String, String>();
@@ -186,6 +212,7 @@ public class HelloAppEngine extends HttpServlet {
 		switch (sMode) {
 		case Initial:
 			out.println("Welcome to Neil's Spanish Quiz.<br/>");
+			// out.println("<style> h1 {font-family: 'Josefin Slab', serif;}");
 			writeQuestionForm("Please input verb to quiz on:", "verb", out);
 			break;
 		case VerbInput:
