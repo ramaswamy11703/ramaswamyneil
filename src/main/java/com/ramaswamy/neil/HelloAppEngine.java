@@ -159,7 +159,7 @@ public class HelloAppEngine extends HttpServlet {
 			out.println(s);
 		}
 		out.println("<br/>");
-		HSubmit hs = new HSubmit("Submit", getSubmitClass());
+		HSubmit hs = new HSubmit("Let's go!", getSubmitClass());
 		out.println(hs.toString());
 		out.println("</form>"); 
 	}
@@ -186,11 +186,15 @@ public class HelloAppEngine extends HttpServlet {
 	 */
 	String[] getThingsToQuizOn(String subject, String[][] allForms) {
 	    String[] toReturn = new String[13];
+	    
+	    if (allForms[1][0] == null) return null;
 
 	    int subjectIndex = 0; // yo: 0, tú: 1, Ud. : 2, Nos. : 3, Vos. : 4, Uds. : 5
 	    for (int i = 0; i < 6; i++) {
 	    	if (subject.equals(subjArray[i])) subjectIndex = i;
 	    }
+	    
+	    
 
 	    int index = 0;
 	    for (int i = 1; i < 18; i++) {
@@ -205,9 +209,8 @@ public class HelloAppEngine extends HttpServlet {
 		out.println("<header class=\"mdl-layout__header\">");
 		out.println("<div class=\"mdl-layout__header-row\">");
 		out.println("<span class=\"mdl-layout-title\">");
-		out.println(text);
-		out.println("</span></div></header></div><br/><br/><br/>");
-	}
+		out.println("<h3 style=\"font-family: 'Josefin Slab', serif\";>" + text + "</h3>");
+		out.println("</span></div></header></div><br/><br/><br/>");	}
 	
 	private void writeFormHeading(PrintWriter out) {
 		out.println("<form action=\"hello\" method=\"post\">");
@@ -283,6 +286,9 @@ public class HelloAppEngine extends HttpServlet {
 		out.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"http://fonts.googleapis.com/css?family=Josefine+Slab\">");
 		out.println("<script defer src=\"https://code.getmdl.io/1.3.0/material.min.js\"></script>");
 		out.println("<style> body { font-family: 'Josefin Slab', serif; margin-left: 20px; margin-top: 20px; } </style>");
+		out.println("<style> header { width: 100%; top: 0; position: fixed; left: 0; }");
+		out.println("<style> h3 { font-family: 'Josefin Slab', serif; } ");
+		out.println("<style> input { outline:none } </style>");
 		out.println("<style>input.redBorder { border-bottom: 2px	solid red; border-radius: 8px; }</style>");
 		out.println("<style>input.greenBorder { border-bottom: 2px solid green;  border-radius: 8px; }</style>");
 		out.println("<body>");
@@ -308,9 +314,15 @@ public class HelloAppEngine extends HttpServlet {
 			break;
 		case VerbInput:
 			String[] answers = getThingsToQuizOn(subject, getForms(verb));
+			if (answers == null) {
+				generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
+				out.println("</br>The verb " + verb + " is not currently supported.");
+				writeQuestionForm("Please input verb to quiz on:", "verb", out);
+			} else {
 			// Generate output form
-			out.println("<h3>Here is your quiz for verb: " + verb + "&nbsp;subject form: " + subject + "</h3>");
+			out.println("<h3 style=\"font-family: 'Josefin Slab', serif;\">Here is your quiz for " + verb + " in the <i> " + subject.toLowerCase() + "</i> form:</h3>");
 			writeQuizForm(answers, null, subject, verb, out);
+			}
 			
 			break;
 		case Score:
