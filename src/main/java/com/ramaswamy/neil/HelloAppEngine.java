@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -32,13 +34,22 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+
 public class HelloAppEngine extends HttpServlet {
 
 
+	private String CLIENT_ID = "337204890997-t1llinp0166leg6h79o564sk47o33drh.apps.googleusercontent.com";
+	
 	String[] keys = {"verb", "conjugation"};
 	String subjArray[] = {"Yo", "Tú", "Él / Ella / Ud.", "Nos.", "Vos.", "Uds."};
 	enum ServerMode {Initial, VerbInput, Quiz, Score};
-	private static String[] tenses = {"presente", "futuro", "imperfecto", "pretérito", "condicional", "presente perfecto", "futuro perfecto", "pluscuamperfecto", "condicional perfecto", 
+	private static String[] tenses = {"presente", "futuro", "imperfecto", "pretérito", "condicional", 
+			"presente perfecto", "futuro perfecto", "pluscuamperfecto", "condicional perfecto", 
 			"presente subj", "imperfecto subj", "presente perfecto subj","pluscuam perfecto subj"};
 	
 	static String[][] getForms(String verb) {
@@ -154,13 +165,18 @@ public class HelloAppEngine extends HttpServlet {
 			String checkedOrNot = "";
 			if (subjArray[i].equalsIgnoreCase("yo")) checkedOrNot = "checked";
 			String s = "<label class=\"mdl-radio mdl-js-radio\" for=\"" + optionNumber + "\"> "
-					+ "<input type=\"radio\" id=\"" + optionNumber + "\" value=\"" + subjArray[i] + "\"name=\"sTenses\" class=\"mdl-radio__button\"" +  checkedOrNot + "> "
+					+ "<input type=\"radio\" id=\"" + optionNumber + "\" value=\"" + subjArray[i] + 
+					"\"name=\"sTenses\" class=\"mdl-radio__button\"" +  checkedOrNot + "> "
 							+ "<span class=\"mdl-radio__label\">" + subjArray[i]+ "</span> </label>";
 			out.println(s);
 		}
 		out.println("<br/>");
 		HSubmit hs = new HSubmit("Let's go!", getSubmitClass());
 		out.println(hs.toString());
+		HHidden hh = new HHidden("loginId", "");
+		hh.setID("loginId");
+		out.println(hh.toString());
+		out.println("<span class=\"g-signin2\" data-onsuccess=\"onSignIn\"></span>");
 		out.println("</form>"); 
 	}
 
@@ -263,6 +279,51 @@ public class HelloAppEngine extends HttpServlet {
 		return "mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent";
 	}
 	
+	private void setGoogleLogin(PrintWriter out) {
+		out.println("<script src=\"https://apis.google.com/js/platform.js\" async defer></script>");
+		out.println("<meta name=\"google-signin-client_id\" content=\"" + CLIENT_ID + "\">");
+		out.println("<script>function onSignIn(googleUser) {var id_token = googleUser.getAuthResponse().id_token; var idParam = document.getElementById(\"loginId\"); idParam.value = id_token;};</script>");
+	}
+	
+	private String verifyGoogleCredentials(String idTokenString) throws IOException {
+
+		try {
+			System.out.println("id token string = " + idTokenString);
+		GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+				.setAudience(Collections.singletonList(CLIENT_ID))
+				// Or, if multiple clients access the backend:
+				//.setAudience(Arrays.asList(CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3))
+				.build();
+
+		// (Receive idTokenString by HTTPS POST)
+
+		GoogleIdToken idToken = verifier.verify(idTokenString);
+		if (idToken != null) {
+			Payload payload = idToken.getPayload();
+
+			// Print user identifier
+			String userId = payload.getSubject();
+			System.out.println("User ID: " + userId);
+
+			// Get profile information from payload
+			String email = payload.getEmail();
+			boolean emailVerified = Boolean.valueOf(payload.getEmailVerified());
+			String name = (String) payload.get("given_name");
+			System.out.println("login email: " + email);
+			return name;
+
+			// Use or store profile information
+			// ...
+
+		} else {
+			System.out.println("Invalid ID token.");
+			return "";
+		}
+		} catch (GeneralSecurityException gse) {
+			throw new IOException(gse.getMessage());
+		}
+	}
+	
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) 
 			throws IOException {
@@ -291,6 +352,8 @@ public class HelloAppEngine extends HttpServlet {
 		out.println("<style> input { outline:none } </style>");
 		out.println("<style>input.redBorder { border-bottom: 2px	solid red; border-radius: 8px; }</style>");
 		out.println("<style>input.greenBorder { border-bottom: 2px solid green;  border-radius: 8px; }</style>");
+		
+		setGoogleLogin(out);
 		out.println("<body>");
 		
 		// out.println("<style> body { text-align:center; } </style>");
@@ -306,6 +369,13 @@ public class HelloAppEngine extends HttpServlet {
 		String verb = pNewMap.remove("verb"); 
 		String subject = pNewMap.remove("sTenses");
 		
+		String loginId = pNewMap.get("loginId"); 
+		if (loginId == null) loginId = "";
+		System.out.println(loginId);
+		if (!loginId.equals("")) {
+			loginId = verifyGoogleCredentials(loginId);
+		}
+		
 		switch (sMode) {
 		case Initial:
 			generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
@@ -320,7 +390,8 @@ public class HelloAppEngine extends HttpServlet {
 				writeQuestionForm("Please input verb to quiz on:", "verb", out);
 			} else {
 			// Generate output form
-			out.println("<h3 style=\"font-family: 'Josefin Slab', serif;\">Here is your quiz for " + verb + " in the <i> " + subject.toLowerCase() + "</i> form:</h3>");
+			out.println("<h3 style=\"font-family: 'Josefin Slab', serif;\">Here is your quiz for " + verb + " in the <i> " + 
+				subject.toLowerCase() + "</i> form: " + subject + ", amigo " + loginId + "!</h3>");
 			writeQuizForm(answers, null, subject, verb, out);
 			}
 			
