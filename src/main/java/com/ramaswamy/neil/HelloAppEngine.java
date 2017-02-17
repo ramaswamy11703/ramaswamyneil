@@ -46,11 +46,15 @@ public class HelloAppEngine extends HttpServlet {
 	private String CLIENT_ID = "337204890997-t1llinp0166leg6h79o564sk47o33drh.apps.googleusercontent.com";
 	
 	String[] keys = {"verb", "conjugation"};
-	String subjArray[] = {"Yo", "Tú", "Él / Ella / Ud.", "Nos.", "Vos.", "Uds."};
+	String subjArray2[] = {"Yo", "Tú", "Él / Ella / Ud.", "Nos.", "Vos.", "Uds."};
+	String subjArray[] = {"yo", "tú", "él, ella, Ud.", "nosotros", "vosotros", "ellos, ellas, Uds."};
 	enum ServerMode {Initial, VerbInput, Quiz, Score};
-	private static String[] tenses = {"presente", "futuro", "imperfecto", "pretérito", "condicional", 
+	private static String[] tenses2 = {"presente", "futuro", "imperfecto", "pretérito", "condicional", 
 			"presente perfecto", "futuro perfecto", "pluscuamperfecto", "condicional perfecto", 
 			"presente subj", "imperfecto subj", "presente perfecto subj","pluscuam perfecto subj"};
+	private static String[] tenses = { "presente", "imperfecto", "pretérito", "futuro", "condicional", 
+			"pretérito perfecto", "pluscuamperfecto", "futuro perfecto", "condicional perfecto", "presente subjuntivo", 
+			"imperfecto subjuntivo", "préterito perfecto subjuntivo", "pluscuamperfecto subjuntivo"};
 	
 	static String[][] getForms(String verb) {
 		String formArray[][] = new String[30][6];
@@ -200,7 +204,7 @@ public class HelloAppEngine extends HttpServlet {
 	 * @param allForms
 	 * @return
 	 */
-	String[] getThingsToQuizOn(String subject, String[][] allForms) {
+	String[] getThingsToQuizOn2(String subject, String[][] allForms) {
 	    String[] toReturn = new String[13];
 	    
 	    if (allForms[1][0] == null) return null;
@@ -218,6 +222,32 @@ public class HelloAppEngine extends HttpServlet {
 	    	toReturn[index++] = allForms[i][subjectIndex];
 	    }
 	  return toReturn;
+	}
+	
+	String[] getThingsToQuizOn(String subject, String verb) {
+		// get the hashmap of all the appropriate tenses and their conjugations
+		//This HashMap goes from the verbal tense to a HashMap of subject tense to appropriate conjugation.
+		// get the right ones and put them in a string array
+		// return said string array
+		
+		tenses = VerbChartAccessor.allVerbalTenses.toArray(new String[VerbChartAccessor.allVerbalTenses.size()]);
+		HashMap<String, HashMap<String, String>> chart = VerbChartAccessor.getConjugations(verb);
+		String[] toReturn = new String[tenses.length];
+		for (int i = 0; i < tenses.length; i++) {
+			String currentVerbalTense = tenses[i];
+			System.out.println(currentVerbalTense);
+			HashMap<String, String> subjectMap = chart.get(currentVerbalTense);
+			System.out.println(subjectMap.size());
+			String toAdd = subjectMap.get(subject);
+			System.out.println(toAdd);
+			toReturn[i] = toAdd;
+		}
+		for (String s: toReturn) {
+			System.out.println("$$" + s);
+		}
+		return toReturn;
+		
+		
 	}
 	
 	private void generateHeader(String text, PrintWriter out) {
@@ -383,7 +413,7 @@ public class HelloAppEngine extends HttpServlet {
 			writeQuestionForm("Please input verb to quiz on:", "verb", out);
 			break;
 		case VerbInput:
-			String[] answers = getThingsToQuizOn(subject, getForms(verb));
+			String[] answers = getThingsToQuizOn(subject, verb);
 			if (answers == null) {
 				generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
 				out.println("</br>The verb " + verb + " is not currently supported.");
@@ -412,12 +442,12 @@ public class HelloAppEngine extends HttpServlet {
 			String userInput = pMap.get(key + "-form");
 			if (answer.equalsIgnoreCase(userInput)) correctAnswers++;
 		}
-		if (correctAnswers < 13) {
-			String[] answers = getThingsToQuizOn(subject, getForms(verb));
-			out.println("You got " + correctAnswers + " out of 13 right. Fix the errors!");
+		if (correctAnswers < tenses.length) {
+			String[] answers = getThingsToQuizOn(subject, verb);
+			out.println("You got " + correctAnswers + " out of " + tenses.length + " right. Fix the errors!");
 			writeQuizForm(answers, pMap, subject, verb, out);
 		} else {
-			out.println("Congratulations! You got " + correctAnswers + " out of 13 right!");
+			out.println("Congratulations! You got " + correctAnswers + " out of " + tenses.length + " right!");
 		}
 	}
 

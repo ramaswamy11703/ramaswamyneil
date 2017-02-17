@@ -7,10 +7,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+//{ "presente", "imperfecto", "pretérito", "futuro", "condicional", 
+	//"pretérito perfecto", "pluscuamperfecto", "futuro perfecto", "condicional perfecto", "presente subjuntivo", 
+	//"imperfecto subjuntivo", "préterito perfecto subjuntivo", "pluscuamperfecto subjuntivo"};
+
 public class VerbChartAccessor {
 	
 	
-	private static ArrayList<String> allVerbalTenses = new ArrayList<String>(16);
+	public static ArrayList<String> allVerbalTenses = new ArrayList<String>(16);
 	public static HashMap<String, HashMap<String, String>> getConjugations(String verb) {
 		//This HashMap goes from the verbal tense to a HashMap of subject tense to appropriate conjugation.
 		HashMap<String, HashMap<String, String>> verbChart = new HashMap<String, HashMap<String, String>>();
@@ -28,6 +32,8 @@ public class VerbChartAccessor {
 				if (callType.equals("Tiempos compuestos del subjuntivo")) callType = "subjuntivo";
 				if (callType.equals("Formas compuestas comunes")) callType = "";
 				if (callType.equals("Indicativo")) callType = "";
+				if (callType.equalsIgnoreCase("Imperativo")) continue;
+				callType = callType.toLowerCase();
 				
 				Elements ths = table.select("th");
 				Elements rows = table.select("tr");
@@ -35,7 +41,6 @@ public class VerbChartAccessor {
 				String verbalTense = ""; 
 				HashMap<String, String> subjectConjMap = null;
 				for (int i = 0; i < ths.size(); i++) {
-					System.out.print("Row " + i + ": "); //  + ":" + rows.get(i).text());
 					// System.out.println(rows.get(i));
 					Elements thh = rows.get(i).select("th");
 					Elements td = rows.get(i).select("td");
@@ -44,8 +49,8 @@ public class VerbChartAccessor {
 					if (td.size() == 0) {
 						verbalTense = thh.get(0).text();
 						if (verbalTense.equals("pretérito anterior")) break;
-						if (verbalTense.equals("futuro perfecto")) break;
-						if (callType.equals("Subjuntivo") && verbalTense.equals("futuro")) break;
+						// if (verbalTense.equals("futuro")) break;
+						if (callType.equalsIgnoreCase("Subjuntivo") && verbalTense.startsWith("futuro")) break;
 						if (!callType.equals("")) verbalTense = verbalTense + " " + callType;
 						allVerbalTenses.add(verbalTense);
 						subjectConjMap = new HashMap<String, String>();
@@ -62,13 +67,6 @@ public class VerbChartAccessor {
 						}
 						subjectConjMap.put(subjectTense, conjugation);	
 					}
-					for (Element ee : thh) {
-						System.out.print("(th): " + ee.text() + ":");
-					}
-					for (Element ee: td) {
-						System.out.println("(td): " + ee.text() + "|");
-					}
-					if (td.size() == 0) System.out.println("");
 					
 				}
 			}
