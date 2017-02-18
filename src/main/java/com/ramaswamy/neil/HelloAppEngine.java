@@ -25,6 +25,7 @@ import java.util.Map;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -409,7 +410,8 @@ public class HelloAppEngine extends HttpServlet {
 		setGoogleLogin(out);
 		out.println("<body>");
 		// All CSS styling is included here. (File is in src/main/webapp/heading.html)
-		request.getRequestDispatcher("heading.html").include(request, response);
+		RequestDispatcher req = request.getRequestDispatcher("/heading.html");
+		if (req != null) req.include(request, response);
 				
 		
 		// key initialization steps that lets us decide what to do.
