@@ -32,7 +32,7 @@
       <td colspan="2" style="font-weight:bold;">Available Servlets:</td>
     </tr>
     <tr>
-      <td><a href='/hello'>The servlet</a></td>
+      <td><a href='/quiz'>The servlet</a></td>
     </tr>
   </table>
 

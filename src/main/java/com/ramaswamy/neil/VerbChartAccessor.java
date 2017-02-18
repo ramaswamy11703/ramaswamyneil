@@ -7,17 +7,31 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-//{ "presente", "imperfecto", "pretérito", "futuro", "condicional", 
-	//"pretérito perfecto", "pluscuamperfecto", "futuro perfecto", "condicional perfecto", "presente subjuntivo", 
-	//"imperfecto subjuntivo", "préterito perfecto subjuntivo", "pluscuamperfecto subjuntivo"};
 
 public class VerbChartAccessor {
 	
 	
-	public static ArrayList<String> allVerbalTenses = new ArrayList<String>(16);
-	public static HashMap<String, HashMap<String, String>> getConjugations(String verb) {
-		//This HashMap goes from the verbal tense to a HashMap of subject tense to appropriate conjugation.
-		HashMap<String, HashMap<String, String>> verbChart = new HashMap<String, HashMap<String, String>>();
+	
+	private ArrayList<String> allVerbalTenses = new ArrayList<String>(16);
+	//This HashMap goes from the verbal tense to a HashMap of subject tense to appropriate conjugation.
+	private HashMap<String, HashMap<String, String>> verbChartMap = new HashMap<String, HashMap<String, String>>();
+	
+	private VerbChartAccessor() {
+	}
+	
+
+	public ArrayList<String> getAllVerbalTenses() {
+		return allVerbalTenses;
+	}
+
+
+	public HashMap<String, HashMap<String, String>> getVerbChartMap() {
+		return verbChartMap;
+	}
+
+
+	public static VerbChartAccessor getConjugations(String verb) {
+		VerbChartAccessor vac = new VerbChartAccessor();
 		try {
 			
 			Document doc = Jsoup.connect("http://www.wordreference.com/conj/ESverbs.aspx?v=" + verb).get();
@@ -52,9 +66,9 @@ public class VerbChartAccessor {
 						// if (verbalTense.equals("futuro")) break;
 						if (callType.equalsIgnoreCase("Subjuntivo") && verbalTense.startsWith("futuro")) break;
 						if (!callType.equals("")) verbalTense = verbalTense + " " + callType;
-						allVerbalTenses.add(verbalTense);
+						vac.allVerbalTenses.add(verbalTense);
 						subjectConjMap = new HashMap<String, String>();
-						verbChart.put(verbalTense, subjectConjMap);
+						vac.verbChartMap.put(verbalTense, subjectConjMap);
 					} else {
 						String subjectTense = thh.get(0).text();
 						if (subjectTense.equals("vos")) continue;	
@@ -73,12 +87,13 @@ public class VerbChartAccessor {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		return verbChart;
+		return vac;
 	}
 	
 	public static void main(String[] args) {
-		HashMap<String, HashMap<String, String>> ponerConjs = getConjugations("poner");
-		for (String tense: allVerbalTenses)  {
+		VerbChartAccessor vac = getConjugations("poner");
+		HashMap<String, HashMap<String, String>> ponerConjs = vac.verbChartMap;
+		for (String tense: vac.allVerbalTenses) {
 			HashMap<String, String> conjugationMap = ponerConjs.get(tense);
 			for (String subject: conjugationMap.keySet()) {
 				String conjugation = conjugationMap.get(subject);
@@ -86,4 +101,35 @@ public class VerbChartAccessor {
 			}
 		}
 	}
+	
+	static String[][] getForms(String verb) {
+		String formArray[][] = new String[30][6];
+		try {// hello
+			// http://users.ipfw.edu/JEHLE/COURSES/verbs/ACEPTAR.HTM                                      
+			Document doc = Jsoup.connect("http://users.ipfw.edu/JEHLE/COURSES/verbs/" + verb + ".HTM").get();
+			// https://jsoup.org/apidocs/org/jsoup/select/Selector.html is cool!                          
+			Element table = doc.select("table").get(1); // second table                                   
+			// header row                                                                                 
+			Elements rows = table.select("tr");
+			String mood = "";
+			int rowIndex = 0;
+			for (int i = 1; i < rows.size(); i++) { //first row is the col names so skip it.              
+				Element row = rows.get(i);
+				Elements cols = row.select("td");
+				if (cols.size() == 1) {
+					mood = cols.get(0).text();
+				}
+				if (cols.get(0).text().equals(" ")) continue; // header2 row                              
+				String tense = cols.get(0).text();
+				for (int j = 2; j < cols.size(); j++) {
+					formArray[rowIndex][j - 2] = cols.get(j).text();
+				}
+				rowIndex++;
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return formArray;
+	}
+	
 }
