@@ -185,13 +185,17 @@ public class HelloAppEngine extends HttpServlet {
 		out.println("<h3 style=\"font-family: 'Josefin Slab', serif\";>" + text + "</h3>");
 		out.println("</span></div></header></div><br/><br/><br/>");	
 	}
+	
+	private void generateSimpleHeader(String text, PrintWriter out) {
+		out.println("<h4>" + text + "</h4>");
+	}
 	private void writeTextInput(String key, PrintWriter out) {
 		out.println("<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">");
 		HtmlTextInput ht = new HtmlTextInput(key); ht.setClass("mdl-textfield__input"); ht.setID(key);
 		out.println(ht.toString());
 
 		out.println("<label class=\"mdl-textfield__label\" for=\"" + key + "\">Verb...</label>");
-		out.println("</div><br/>");
+		out.println("</div>");
 	}
 
 	public void writeActionType(String a, PrintWriter out) {
@@ -209,25 +213,27 @@ public class HelloAppEngine extends HttpServlet {
 	/**
 	 * Renders the page that asks the user to input a verb and pick a subject tense
 	 */
-	public void writeQuestionForm(String question, PrintWriter out) {
+	public void writeQuestionForm(PrintWriter out) {
+		String question = "Please input verb to quiz on:";
 		this.writeFormHeading(out);
 		writeActionType(VERBIN_PARAM, out);
-		out.println(question);
+		out.println("<table><tr>");
+		out.println("<td><h3>Verb:</h3></td>");
+		
+		out.println("<td>");
 		writeTextInput(VERB_PARAM, out);
-		out.println("Pick your subject pronoun: ");
+		out.println("</td></tr>");
+		out.println("<tr><td><h3>Subject:</h3></td>");
+		out.println("<td>");
 		for (int i = 0; i < subjArray.length; i++) {
 			String optionNumber = "option" + String.valueOf(i);
 			out.println(generateRadioButton(optionNumber, subjArray[i], subjArray[i].equalsIgnoreCase("yo")));
 		}
-		out.println("<br/>");
-		out.println("<table><tr><td>");
-		HtmlSubmit hs = new HtmlSubmit("Let's go!", getSubmitClass());
+		out.println("</td></tr>");
+		
+		out.println("<tr><td style=\"align:center\" conSpan=\"2\">");
+		HtmlSubmit hs = new HtmlSubmit("¡Vamos!", getSubmitClass());
 		out.println(hs.toString());
-		HtmlHidden hh = new HtmlHidden("loginId", "");
-		hh.setID("loginId");
-		out.println(hh.toString());
-		out.println("</td><td>");
-		out.println("<span class=\"g-signin2\" data-onsuccess=\"onSignIn\"></span>");
 		out.println("</td></tr></table>");
 		out.println("</form>"); 
 	}
@@ -399,17 +405,17 @@ public class HelloAppEngine extends HttpServlet {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) 
 			throws IOException, ServletException {
-
-
 		response.setContentType("text/html; charset=UTF-8");
 		PrintWriter out = response.getWriter();
 
 		out.println("<html>");
+		out.println("<meta charset=\"utf-8\">");
 
 		
-		setGoogleLogin(out);
+		// setGoogleLogin(out);
 		out.println("<body>");
 		// All CSS styling is included here. (File is in src/main/webapp/heading.html)
+		request.setCharacterEncoding("UTF-8");
 		RequestDispatcher req = request.getRequestDispatcher("/heading.html");
 		if (req != null) req.include(request, response);
 				
@@ -438,19 +444,19 @@ public class HelloAppEngine extends HttpServlet {
 		
 		switch (sMode) {
 		case Initial:
-			generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
-			writeQuestionForm("Please input verb to quiz on:", out);
+			// generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
+			writeQuestionForm(out);
 			break;
 
 		case VerbInput:
 			String[] answers = getThingsToQuizOn(subject, verb);
 			if (answers == null) {
-				generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
-				out.println("</br>The verb " + verb + " is not currently supported.");
-				writeQuestionForm("Please input verb to quiz on:", out);
+				// generateHeader("Welcome to project <i> Tres Leches Mañana.</i>", out);
+				generateSimpleHeader("The verb " + verb + " is not currently supported.", out);
+				writeQuestionForm(out);
 			} else {
-				generateHeader("Here is your quiz for " + verb + " in the <i> " + 
-						subject.toLowerCase() + "</i> form, amigo " + loginId + "!", out);
+				//generateHeader("Here is your quiz for " + verb + " in the <i> " + 
+				//		subject.toLowerCase() + "</i> form, amigo " + loginId + "!", out);
 				writeQuizForm(answers, null, subject, verb, out);
 			}
 			break;
@@ -473,10 +479,10 @@ public class HelloAppEngine extends HttpServlet {
 		}
 		if (correctAnswers < tenses.length) {
 			String[] answers = getThingsToQuizOn(subject, verb);
-			generateHeader("You got " + correctAnswers + " out of " + tenses.length + " right. Fix the errors!", out);
+			generateSimpleHeader("You got " + correctAnswers + " out of " + tenses.length + " right. Fix the errors!", out);
 			writeQuizForm(answers, pMap, subject, verb, out);
 		} else {
-			generateHeader("Congratulations! You got " + correctAnswers + " out of " + tenses.length + " right!", out);
+			generateSimpleHeader("Congratulations! You got " + correctAnswers + " out of " + tenses.length + " right!", out);
 			out.println(getResetButton());
 		}
 

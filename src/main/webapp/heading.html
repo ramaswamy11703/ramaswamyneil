@@ -1,13 +1,47 @@
+
+<meta charset="utf-8">
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+<meta name="google-signin-client_id" content="337204890997-t1llinp0166leg6h79o564sk47o33drh.apps.googleusercontent.com">
+<script>function onSignIn(googleUser) {
+	var profile = googleUser.getBasicProfile();
+	var id_token = googleUser.getAuthResponse().id_token; 
+	var idParam = document.getElementById("loginId"); 
+	if (idParam) {
+		idParam.value = id_token;
+	}
+	var loginSpan = document.getElementById("loginSpan");
+	var imgUrl = profile.getImageUrl();
+	loginSpan.innerHTML = "<img style=\"border-radius:40px\" src=\"" + imgUrl + "\" height=75px width=75px >";
+	var gSignin = document.getElementById("g-signin2")
+	gSignin.style = "display:none";
+	};
+</script>
+
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.cyan-pink.min.css">
-<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Josefine+Slab">
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Josefin+Slab">
 <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 <style>
   body { font-family: 'Josefin Slab', serif; margin-left: 20px; margin-top: 20px; } 
   header { width: 100%; top: 0; position: fixed; left: 0; }
-  h3 { font-family: 'Josefin Slab', serif; } 
+  h3, h4 { font-family: 'Josefin Slab', serif; } 
   input { outline:none } 
-  input.redBorder { border-bottom: 2pxsolid red; border-radius: 8px; }
+  input.redBorder { border-bottom: 2px solid red; border-radius: 8px; }
   input.greenBorder { border-bottom: 2px solid green;  border-radius: 8px; }
 </style>
 
+
+<table style="background-color:#00BCD4">
+	<tr>
+		<td style="width: 120px"><img height=120px width=120px
+			src="images/TresLechesLogo.png"></td>
+		<td style="width: 80%; text-align: center;"><h2>
+				Tres Leches<br />&nbsp;&nbsp;Manana
+			</h2></td>
+		<td style="width: 120px">
+			<span id="loginSpan"></span>
+			<span id="g-signin2" class="g-signin2" data-onsuccess="onSignIn"></span>
+		</td>
+	</tr>
+</table>
